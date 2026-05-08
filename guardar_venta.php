@@ -1,7 +1,7 @@
 <?php
 include 'conexion.php';
 
-if ($_SERVER["POST_METHOD"] == "POST" || isset($_POST['cliente'])) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['cliente'])) {
     $cliente  = $_POST['cliente'];
     $producto = $_POST['producto'];
     $cantidad = $_POST['cantidad'];
