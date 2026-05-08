@@ -1,22 +1,43 @@
 services:
   app:
     build: .
+    container_name: ventas_app
     ports:
       - "8080:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=root
-      - DB_NAME=ventas_db
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: ventas_db
+    volumes:
+      - .:/var/www/html
+    networks:
+      - ventas_network
 
   db:
     image: mysql:8.0
+    container_name: ventas_db
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ventas_db
-    volumes:
-      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
+    volumes:
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ventas_network
+
+volumes:
+  mysql_data:
+
+networks:
+  ventas_network:
+    driver: bridge
