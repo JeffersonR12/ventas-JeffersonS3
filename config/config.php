@@ -27,6 +27,31 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Función para crear el esquema si falta alguna tabla clave
+function verificarEsquemaBD($conexion) {
+    $resultado = $conexion->query("SHOW TABLES LIKE 'usuarios'");
+    if ($resultado === false || $resultado->num_rows === 0) {
+        $rutaSql = __DIR__ . '/../database.sql';
+        if (!file_exists($rutaSql)) {
+            throw new Exception('Archivo de inicialización de base de datos no encontrado: ' . $rutaSql);
+        }
+
+        $sql = file_get_contents($rutaSql);
+        if ($sql === false) {
+            throw new Exception('No se pudo leer el archivo de inicialización de la base de datos.');
+        }
+
+        if (!$conexion->multi_query($sql)) {
+            throw new Exception('Error al inicializar la base de datos: ' . $conexion->error);
+        }
+
+        // Consumir todos los resultados restantes para evitar bloqueos
+        while ($conexion->more_results() && $conexion->next_result()) {
+            // no-op
+        }
+    }
+}
+
 // Función para conectar a la base de datos
 function conectarBD() {
     try {
@@ -44,6 +69,9 @@ function conectarBD() {
         
         // Configurar charset UTF-8
         mysqli_set_charset($conn, "utf8mb4");
+
+        // Verificar que el esquema de la base de datos exista y crear tablas si faltan.
+        verificarEsquemaBD($conn);
         
         return $conn;
     } catch (Exception $e) {
