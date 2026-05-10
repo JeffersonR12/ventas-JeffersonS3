@@ -25,6 +25,7 @@
         </div>
     </div>
     
+    <script src="public/js/utils.js"></script>
     <script src="public/js/productos.js"></script>
 </body>
 </html>

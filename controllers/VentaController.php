@@ -38,10 +38,11 @@ class VentaController {
                 throw new Exception('Usuario no autenticado');
             }
             
-            $data = json_decode(file_get_contents('php://input'), true);
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true);
             
             if (!$data) {
-                throw new Exception('Datos inválidos');
+                throw new Exception('Datos inválidos - JSON malformado');
             }
             
             // Validar datos
@@ -60,7 +61,7 @@ class VentaController {
             
             // Calcular subtotal e IGV
             $subtotal = 0;
-            foreach ($items as $item) {
+            foreach ($items as &$item) {
                 if (empty($item['producto_id']) || empty($item['cantidad']) || !is_numeric($item['cantidad'])) {
                     throw new Exception('Datos de producto inválidos');
                 }
@@ -78,7 +79,9 @@ class VentaController {
                 $item_total = $producto['precio_unitario'] * $item['cantidad'];
                 $subtotal += $item_total;
                 $item['precio_unitario'] = $producto['precio_unitario'];
+                $item['subtotal'] = $item_total;
             }
+            unset($item);
             
             $igv = $subtotal * IGV_RATE;
             
@@ -92,6 +95,11 @@ class VentaController {
                 $subtotal,
                 $igv
             );
+            
+            // Actualizar stock de productos
+            foreach ($items as $item) {
+                $this->productoModel->actualizarStock($item['producto_id'], $item['cantidad']);
+            }
             
             echo json_encode([
                 'exito' => true,
@@ -153,6 +161,13 @@ class VentaController {
 $controlador = new VentaController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['accion']) && $_GET['accion'] === 'crear') {
+    // Verificar autenticación para crear venta
+    if (!isset($_SESSION['usuario_id'])) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['exito' => false, 'mensaje' => 'Usuario no autenticado']);
+        exit;
+    }
     $controlador->crearVenta();
 } elseif (isset($_GET['accion'])) {
     header('Content-Type: application/json');

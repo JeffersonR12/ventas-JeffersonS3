@@ -11,18 +11,29 @@ async function request(url, options = {}) {
     try {
         const response = await fetch(url, {
             method: options.method || 'GET',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
             body: options.body ? JSON.stringify(options.body) : null
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+
+        const text = await response.text();
+        let data = null;
+        try {
+            data = text ? JSON.parse(text) : null;
+        } catch (parseError) {
+            // Si no es JSON válido, mantenemos el texto crudo para depuración.
+            console.warn('Respuesta no es JSON válido:', text);
         }
-        
-        return await response.json();
+
+        if (!response.ok) {
+            const message = data && data.mensaje ? data.mensaje : `HTTP error! status: ${response.status}`;
+            throw new Error(message);
+        }
+
+        return data;
     } catch (error) {
         console.error('Error en petición:', error);
         mostrarNotificacion('Error en la petición: ' + error.message, 'error');

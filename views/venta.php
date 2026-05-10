@@ -116,6 +116,7 @@
         </div>
     </div>
     
+    <script src="public/js/utils.js"></script>
     <script src="public/js/venta.js"></script>
 </body>
 </html>

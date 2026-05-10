@@ -63,6 +63,7 @@
         </div>
     </div>
     
+    <script src="public/js/utils.js"></script>
     <script src="public/js/historial.js"></script>
 </body>
 </html>

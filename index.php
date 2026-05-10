@@ -9,8 +9,11 @@ require_once __DIR__ . '/config/config.php';
 $pagina = isset($_GET['pagina']) ? trim($_GET['pagina']) : 'login';
 $pagina = preg_replace('/[^a-zA-Z0-9_]/', '', $pagina);
 
+// Permitir acceso a llamadas API sin autenticación
+$esLlamadaAPI = isset($_GET['accion']);
 $publicPages = ['login'];
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && !in_array($pagina, $publicPages, true) && !isset($_SESSION['usuario_id'])) {
+
+if (!$esLlamadaAPI && $_SERVER['REQUEST_METHOD'] === 'GET' && !in_array($pagina, $publicPages, true) && !isset($_SESSION['usuario_id'])) {
     header('Location: index.php?pagina=login');
     exit;
 }
